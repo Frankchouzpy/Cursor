@@ -73,7 +73,7 @@ def calculate_g_function(x, H, R, gama1, gama3, theta, fai, k, muhat, sigma_hat)
         R (float): Tunnel radius
         gama1 (float): First bias parameter
         gama3 (float): Third bias parameter
-        theta (float): Bias angle
+        theta (float): Bias angle in degrees
         fai (float): Average internal friction angle
         k (float): Soil parameter
         muhat (float): First integration variable
@@ -82,10 +82,13 @@ def calculate_g_function(x, H, R, gama1, gama3, theta, fai, k, muhat, sigma_hat)
     Returns:
         float: g(x) value
     """
+    # Convert theta from degrees to radians
+    theta_rad = np.radians(theta)
+    
     tanb = H / (np.sqrt(2 * np.pi) * (1 - 0.02 * fai) * (H - k * (H - R)))
-    g_11 = H + (gama3 * R + muhat) * np.cos(theta) + sigma_hat * np.sin(theta)
+    g_11 = H + (gama3 * R + muhat) * np.cos(theta_rad) + sigma_hat * np.sin(theta_rad)
     g_1 = tanb / g_11
-    g_21 = -np.pi * tanb**2 * (x + (gama3 * R + muhat) * np.sin(theta) - sigma_hat * np.cos(theta))**2
+    g_21 = -np.pi * tanb**2 * (x + (gama3 * R + muhat) * np.sin(theta_rad) - sigma_hat * np.cos(theta_rad))**2
     g_22 = g_11**2
     g_2 = g_21 / g_22
     return g_1 * np.exp(g_2)

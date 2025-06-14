@@ -42,19 +42,21 @@ def calculate_settlement_curves(x_range, L, first_params, second_params):
     Returns:
         tuple: (first_tunnel, second_tunnel, total_settlement)
     """
+    print("\n开始计算沉降曲线...")
     first_tunnel = []
     second_tunnel = []
     total_settlement = []
     n = len(x_range)
     for i, x in enumerate(x_range):
         if i % max(1, n // 10) == 0:
-            print(f"Progress: {i/n*100:.1f}%")
+            print(f"计算进度: {i/n*100:.1f}%")
             sys.stdout.flush()
         ft = calculate_settlement(x + L, *first_params)
         st = calculate_settlement(x - L, *second_params)
         first_tunnel.append(ft)
         second_tunnel.append(st)
         total_settlement.append(ft + st)
+    print("计算完成！")
     return np.array(first_tunnel), np.array(second_tunnel), np.array(total_settlement)
 
 def plot_settlement_curves(x_range, first_tunnel, second_tunnel, total_settlement):
@@ -96,12 +98,19 @@ def plot_settlement_curves(x_range, first_tunnel, second_tunnel, total_settlemen
 
 def main():
     try:
+        print("\n欢迎使用双线偏压地表沉降计算程序！")
+        print("=" * 50)
+        
         # Get tunnel spacing
-        L = float(input("Enter tunnel spacing (L): "))
+        L = float(input("请输入隧道间距 (L): "))
         
         # Get parameters for both tunnels
+        print("\n请输入第一个隧道的参数：")
         first_params = get_tunnel_parameters("First")
+        print("\n请输入第二个隧道的参数：")
         second_params = get_tunnel_parameters("Second")
+        
+        print("\n所有参数输入完成，开始计算...")
         
         # Calculate settlement curves
         x_range = np.linspace(-50, 50, 1000)
@@ -109,12 +118,14 @@ def main():
             x_range, L, first_params, second_params
         )
         
+        print("\n正在生成沉降曲线图...")
         # Plot and save results
         plot_settlement_curves(x_range, first_tunnel, second_tunnel, total_settlement)
-        logger.info("Settlement curves have been calculated and saved as 'settlement_curve.png'")
+        print("\n计算完成！沉降曲线已保存为 'settlement_curve.png'")
+        print("=" * 50)
         
     except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
+        logger.error(f"程序运行出错: {str(e)}")
         raise
 
 if __name__ == "__main__":
