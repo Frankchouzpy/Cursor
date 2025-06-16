@@ -1,0 +1,53 @@
+Part Two of the Project:
+	* This part of the project requires you to create a folder named "Double_tunnels" and place all the files you generate related to this task into that folder.
+	* Referring to Part One (i.e., the file “1_single_tunnel.txt”) where a settlement function calculation software for a single tunnel was designed (including all relevant files and the UI interface), use Python to call the function W(x, H, R, Vl, gama1, gama3, theta, beta) to compute the settlement caused by double tunnels. Design an app for calculating settlement induced by double tunnels, as specified below.
+
+
+(*First step*) Refer to the file “1_single_tunnel.txt” for the definition of the ground settlement function caused by a single tunnel: W(x, H, R, Vl, gama1, gama3, theta, beta);
+
+(*Second step*) Prompt the user to input parameters for the first and second tunnels in order to calculate the settlement function induced by each tunnel:
+
+	1. Input the spacing between the two tunnels: L;
+
+	2. Prompt the user to input the parameters required for calculating the settlement induced by the first tunnel:
+
+		(1) Tunnel depth: HF; (2) Tunnel radius: RF; (3) Ground loss rate: VlF; (4) First bias parameter: gama1F; (5) Third bias parameter: gama3F; (6) Bias angle: thetaF; (7) Strata influence angle: betaF。
+
+
+	3. Prompt the user to input the parameters required for calculating the settlement induced by the second tunnel:
+
+		(1) Tunnel depth: HS; (2) Tunnel radius: RS; (3) Ground loss rate: VlS; (4) First bias parameter: gama1S; (5) Third bias parameter: gama3S; (6) Bias angle: thetaS; (7) Strata influence angle: betaS.
+
+
+	4. Compute the settlement function induced by the first tunnel: FisrtT(x)=W((x+L), HF, RF, VlF, gama1F, gama3F, thetaF, betaF);
+
+	5. Compute the settlement function induced by the second tunnel: SecondT(x)=W((x-L), HS, RS, VlS, gama1S, gama3S, thetaS, betaS);
+
+
+(*Third step*) Apply the principle of superposition to obtain the total ground settlement induced by the two tunnels:
+	TotalT(x)=FisrtT(x)+SecondT(x)=W(x HF, RF, VlF, gama1F, gama3F, thetaF, betaF,HS, RS, VlS, gama1S, gama3S, thetaS, betaS);
+
+(*Fourth step*) UI Interface Design
+	1. The UI should follow the design of the single tunnel interface, with the following key modifications:
+	
+	2.The app title at the top should be: “Double Tunnels Settlement Calculator”.
+
+	3. Parameter input is divided into two sections:
+
+		(1) Section 1 (Parameters for the first tunnel): HF, RF, VlF, gama1F, gama3F, thetaF, betaF
+
+		(2) Section 2 (Parameters for the second tunnel): HS, RS, VlS, gama1S, gama3S, thetaS, betaS
+
+
+	4.The graphical display area should show three curves:
+
+		(1) FirstT(x) – Settlement curve due to the first tunnel;
+
+		(2) SecondT(x) – Settlement curve due to the second tunnel;
+
+		(3) TotalT(x) – Total settlement curve due to both tunnels (via superposition);
+
+		(4) Each curve must be annotated with its minimum point (x, W(x)) on the plot.
+
+
+

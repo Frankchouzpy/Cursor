@@ -1,0 +1,83 @@
+Project Overview:
+	*This project first requires you to create a folder named “Single_tunnel” and place all the generated related files into this folder.
+
+(*First step*) Objective: Your objective is to design an application using Python. This application must include a graphical user interface (UI). Detailed Requirements for the UI and Program:
+
+	1. UI Requirements:
+		(1) The top of the app should display the title: “Single Tunnel Settlement Calculator”;
+		(2) Below the title, there should be input fields for tunnel parameters, prompting the user to enter the following parameters: H, R, Vl, gama1, gama3, theta, 和beta；
+		(3) Each parameter input should consist of a label and an input box arranged as follows:
+			- Prompt: "Enter H" followed by an input box for parameter H
+			- Prompt: "Enter R" followed by an input box for parameter R
+			- …
+			- Prompt: "Enter beta" followed by an input box for parameter beta
+		(4) These label-input pairs should be arranged sequentially in a single horizontal row.
+			If the combined width exceeds the UI window width, the overflow parameters and their input boxes should automatically wrap to the next line.
+		(5) After the parameter input fields, provide a button to start the analysis (you may name the button appropriately according to your program). 
+		(6) When the user clicks the analysis button, a message should display indicating that the program is calculating.
+		(7) Upon completion of the calculation, a message should display indicating calculation is complete.
+		(8) Below this, include a graphical display area to show the calculated settlement curve: W(x, H, R, Vl, gama1, gama3, theta, beta)。
+
+	2. Overall Design for Calculating W(x, H, R, Vl, gama1, gama3, theta, beta):
+		2.1 User Input Parameters (The program should prompt the user to input the following seven parameters):
+			(1) Tunnel depth: H；
+			(2) Tunnel radius: R；
+			(3) Ground loss rate: Vl；
+			(4) First bias parameter: gama1；
+			(5) Third bias parameter: gama3；
+			(6) Bias angle: theta；
+			(7) Strata influence angle: beta。
+		2.2 Since the program uses trigonometric functions - specifically tan, cos, and sin - it must consider in Python whether the input angles theta and beta are in degrees or radians. The user inputs for theta and beta are given in degrees. For example, if the user inputs beta = 45, it represents an angle of 45 degrees. The program should convert this degree value to radians (i.e., 45 degrees = pi/2 radians) before performing calculations.  Thus, if the user inputs beta = 45, in the following expression for f_1, the value of tan(beta) should be calculated as tan(pi/4) = 1.
+		2.3 Calculation of Intermediate Variables:
+			(1) u0=R-R*sqrt(1-Vl)；
+			(2)  u2=R*sqrt(1-Vl)-R*(1-Vl)/(sqrt(1-Vl)+gama1)；
+			(3)  A=H-R；
+			(4)  B=H+R；
+			(5)  C=-sqrt(R^2-(mu-H)^2)；
+			(6)  D=-C；
+			(7) f_1=tan(beta)/mu；
+			(8) f_2=-pi*tan(beta)^2*(x-sigema)^2/mu^2；
+			(9)  f(x)=f_1*exp(f_2)；
+			(10) A_1=-R+u0+gama1*R；
+			(11) B_1=-A_1；
+			(12)  C_1=-(R-u0+u2)*sqrt(1-(muhat/(R-u0-gama1*R))^2)；
+			(13)  D_1=-C_1；
+			(14)  g_11=H+(gama3*R+muhat)*cos(theta)+sigemahat*sin(theta)；
+			(15)  g_1=tan(beta)/g_11；
+			(16)  g_21=-pi*tan(beta)^2*(x+(gama3*R+muhat)*sin(theta)-sigemahat*cos(theta))^2；
+			(17)  g_22=(H+(gama3*R+muhat)*cos(theta)+sigemahat*sin(theta))^2；
+			(18)  g_2=g_21/g_22；
+			(19)  g(x)=g_1*exp(g_2)。
+		
+		2.4 Having established the above 19 expressions, proceed to calculate the functions F(x) and G(x) as follows:
+			2.4.1 Perform a double integration on f(x):
+				(1) The first integration variable is "mu", over the interva [A, B].
+				(2) The second integration variable is "sigema", over the interva [C, D].
+				(3) After these two successive integrations, the resulting function depends on x, denoted as F(x).
+			2.4.2 Perform a double integration on g(x):
+				(1) The first integration variable is "muhat", over the interva [A_1, B_1].
+				(2) The second integration variable is "sigemahat", over the interva [[C_1, D_1]].
+				(3) After these two successive integrations, the resulting function depends on x, denoted as G(x).
+
+		2.5 Calculate the final required function: W(x, H, R, Vl, gama1, gama3, theta, beta):
+			W(x, H, R, Vl, gama1, gama3, theta, beta) = -1000*(F(x)-G(x))；
+
+(*Second step*) Recommendations for Double Integration Methods:
+	1. For the double integrals, you may choose from the following numerical integration methods:
+		(1) The "dblquad" function from the "scipy.integrat" module, which is suitable for many standard cases.
+		(2) The Legendre-Gauss quadrature method, which can offer high accuracy for smooth integrands.
+		(3) If the integration interval is large or the integrand exhibits rapid variation, consider using "nquad" from "scipy.integrate" or adaptive multidimensional integration.
+		(4) However, if you are aware of a more efficient or accurate numerical integration method suitable for this problem, you are encouraged to implement the best available approach.
+
+(*Third step*) UI界面图形区程序要求：
+	1. The graphical display area should include controls for zooming and panning the plot. Users can activate these controls via buttons to conveniently zoom in/out and pan across the graph for detailed inspection.
+	2. The graphical display area should also feature a point-marking tool. When this tool is activated, the user can click any point on the graph to display the exact coordinates of that point.
+	3. Customization button: allows users to configure various graphical and labeling settings according to their preferences. Specifically, through this button, users should be able to:
+		(1) Customize the plot title.
+		(2) Modify the axis labels (e.g., "Settlement (mm)", "Distance (m)")
+		(3) Adjust the coordinate units
+		(4) Change the color and thickness of each curve
+		(5) Set marker styles and sizes
+		(6) Optionally adjust font size, grid visibility, background color, etc.
+	4. Additionally, there should be a save button. When clicked, it should open a dialog allowing the user to save the current plot image. The user can specify the desired filename and save path.
+	5. When designing this feature, you are encouraged to refer to high-quality, user-friendly open-source projects (e.g., on GitHub) to ensure the interface is intuitive and supports effective graphical customization.
