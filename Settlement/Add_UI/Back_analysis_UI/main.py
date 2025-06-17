@@ -3,10 +3,13 @@ import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                            QGroupBox, QMessageBox, QFileDialog, QStatusBar)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+                            QGroupBox, QMessageBox, QFileDialog, QStatusBar,
+                            QDockWidget, QTextEdit, QAction)
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QPoint
+from PyQt5.QtGui import QIcon
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from scipy.optimize import minimize, differential_evolution
 from scipy import integrate
 import math
@@ -296,10 +299,128 @@ class BackAnalysisUI(QMainWindow):
         self.canvas = FigureCanvas(self.figure)
         right_layout.addWidget(self.canvas)
         
+        # Add matplotlib navigation toolbar
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        right_layout.addWidget(self.toolbar)
+        
         main_layout.addWidget(right_panel, stretch=2)
         
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
+        
+        # New members for coordinate display and point marking toggle
+        self.coordinate_display_active = False
+        self.motion_cid = None
+        
+        self.mark_points_active = False
+        self.click_cid = None
+        
+        # Data points for marking
+        self.data_points = []
+        
+        self.create_custom_plot_toolbar()
+        self.create_data_dock()
+        
+    def create_custom_plot_toolbar(self):
+        """Create a custom toolbar for additional plot actions."""
+        custom_toolbar = self.addToolBar("Custom Plot Tools")
+        custom_toolbar.setObjectName("CustomPlotToolbar")
+
+        self.toggle_coords_action = QAction(QIcon(), "Enable Coords Hover", self)
+        self.toggle_coords_action.setToolTip("Toggle display of mouse coordinates on hover")
+        self.toggle_coords_action.setCheckable(True)
+        self.toggle_coords_action.setChecked(self.coordinate_display_active)
+        self.toggle_coords_action.triggered.connect(self.toggle_coordinate_display)
+        custom_toolbar.addAction(self.toggle_coords_action)
+
+        self.toggle_mark_action = QAction(QIcon(), "Enable Mark Points", self)
+        self.toggle_mark_action.setToolTip("Toggle marking points on plot with a click")
+        self.toggle_mark_action.setCheckable(True)
+        self.toggle_mark_action.setChecked(self.mark_points_active)
+        self.toggle_mark_action.triggered.connect(self.toggle_mark_points)
+        custom_toolbar.addAction(self.toggle_mark_action)
+        
+        self.save_plot_action = QAction(QIcon(), "Save Plot", self)
+        self.save_plot_action.setToolTip("Save the current plot")
+        self.save_plot_action.triggered.connect(self.save_plot)
+        custom_toolbar.addAction(self.save_plot_action)
+
+    def create_data_dock(self):
+        """Create a dock widget to display marked points"""
+        dock = QDockWidget("Marked Points", self)
+        dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        
+        self.points_text = QTextEdit()
+        self.points_text.setReadOnly(True)
+        dock.setWidget(self.points_text)
+        
+        self.addDockWidget(Qt.RightDockWidgetArea, dock)
+        
+    def toggle_coordinate_display(self):
+        """Toggles the display of mouse coordinates in the status bar on hover."""
+        if self.coordinate_display_active:
+            if self.motion_cid:
+                self.canvas.mpl_disconnect(self.motion_cid)
+                self.motion_cid = None
+            self.statusBar.clearMessage()
+        else:
+            self.motion_cid = self.canvas.mpl_connect('motion_notify_event', self.update_status_bar)
+        
+        self.coordinate_display_active = not self.coordinate_display_active
+        self.toggle_coords_action.setChecked(self.coordinate_display_active)
+        self.toggle_coords_action.setText("Disable Coords Hover" if self.coordinate_display_active else "Enable Coords Hover")
+
+    def toggle_mark_points(self):
+        """Toggles the ability to mark points on the plot with a click."""
+        if self.mark_points_active:
+            if self.click_cid:
+                self.canvas.mpl_disconnect(self.click_cid)
+                self.click_cid = None
+        else:
+            self.click_cid = self.canvas.mpl_connect('button_press_event', self.on_click)
+        
+        self.mark_points_active = not self.mark_points_active
+        self.toggle_mark_action.setChecked(self.mark_points_active)
+        self.toggle_mark_action.setText("Disable Mark Points" if self.mark_points_active else "Enable Mark Points")
+
+    def update_status_bar(self, event):
+        """Update status bar with current mouse coordinates"""
+        if event.inaxes:
+            x, y = event.xdata, event.ydata
+            self.statusBar.showMessage(f'x: {x:.3f}, y: {y:.3f}')
+        else:
+            self.statusBar.clearMessage()
+            
+    def on_click(self, event):
+        """Handle mouse clicks for marking points"""
+        if event.inaxes and self.mark_points_active:
+            x, y = event.xdata, event.ydata
+            ax = self.figure.gca() # Get current active axes
+            ax.plot(x, y, 'ro')
+            ax.text(x, y, f'({x:.2f}, {y:.2f})', fontsize=8, ha='left', va='bottom')
+            self.canvas.draw()
+            
+            # Store point data
+            self.data_points.append((x, y))
+            self.update_points_display()
+            
+    def update_points_display(self):
+        """Update the dock widget with marked points"""
+        text = "Marked Points:\n"
+        for i, (x, y) in enumerate(self.data_points, 1):
+            text += f"{i}. x: {x:.3f}, y: {y:.3f}\n"
+        self.points_text.setText(text)
+        
+    def save_plot(self):
+        """Save the current plot with enhanced options"""
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Save Plot", "", 
+            "PNG Files (*.png);;PDF Files (*.pdf);;SVG Files (*.svg);;All Files (*)"
+        )
+        if file_name:
+            self.figure.savefig(file_name, dpi=300, bbox_inches='tight')
+            QMessageBox.information(self, "Success", "Plot saved successfully!")
+            
 
     def load_data(self):
         try:
